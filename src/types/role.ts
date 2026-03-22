@@ -1,0 +1,10 @@
+export interface Role {
+  id: number
+  name: string
+  code: string
+  description?: string
+  enabled: boolean
+  createTime?: string
+  updateTime?: string
+  permissionIds?: number[]
+}

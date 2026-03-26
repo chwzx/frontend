@@ -7,7 +7,7 @@
           <el-button
             type="primary"
             @click="handleCreate"
-            v-if="userStore.hasPermission('supply:category:add') || userStore.hasPermission('traceability:product:add')"
+            v-if="userStore.hasPermission('supply:category:add')"
           >
             <el-icon><Plus /></el-icon>
             新增分类
@@ -44,7 +44,7 @@
               link
               type="primary"
               @click="handleEdit(row)"
-              v-if="userStore.hasPermission('supply:category:edit') || userStore.hasPermission('traceability:product:edit')"
+              v-if="userStore.hasPermission('supply:category:edit')"
             >
               <el-icon><Edit /></el-icon>
               编辑
@@ -52,7 +52,7 @@
             <el-popconfirm
               title="确定要删除该分类吗？"
               @confirm="handleDelete(row)"
-              v-if="userStore.hasPermission('supply:category:delete') || userStore.hasPermission('traceability:product:delete')"
+              v-if="userStore.hasPermission('supply:category:delete')"
             >
               <template #reference>
                 <el-button size="small" link type="danger">
@@ -142,25 +142,12 @@ import {
   getCategories,
   createCategory,
   updateCategory,
-  deleteCategory
-} from '@/api/traceability'
+  deleteCategory,
+  type Category
+} from '@/api/supply'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
-
-interface Category {
-  id: number
-  name: string
-  code: string
-  parentId: number | null
-  icon: string | null
-  sort: number
-  description: string | null
-  enabled: boolean
-  createTime: string
-  updateTime: string
-  children?: Category[]
-}
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -212,7 +199,6 @@ const fetchData = async () => {
   loading.value = true
   try {
     const res = await getCategories()
-    // 响应拦截器返回的是完整响应对象 { code, message, data }
     const data = res.data || []
     tableData.value = buildTree(data)
   } catch (error: any) {
@@ -296,7 +282,7 @@ const handleSubmit = async () => {
           ...formData,
           parentId: formData.parentId || undefined
         }
-        
+
         if (formData.id) {
           await updateCategory(formData.id, data)
           ElMessage.success('更新成功')

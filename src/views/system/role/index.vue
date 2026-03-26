@@ -21,7 +21,7 @@
               <el-icon><Switch /></el-icon>
               {{ allEnabled ? '批量禁用' : '批量启用' }}
             </el-button>
-            <el-button type="primary" @click="handleCreate">
+            <el-button type="primary" @click="handleCreate" class="white-text-btn">
               <el-icon><Plus /></el-icon>
               新增角色
             </el-button>
@@ -100,13 +100,27 @@
             {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right" align="center">
+        <el-table-column label="操作" width="320" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button size="small" link type="primary" @click="handlePermissions(row)" v-if="userStore.hasPermission('system:role:edit')">
+            <el-button
+              size="small"
+              type="primary"
+              plain
+              @click="handlePermissions(row)"
+              v-if="userStore.hasPermission('system:role:edit')"
+              class="action-btn permission-btn"
+            >
               <el-icon><Lock /></el-icon>
               分配权限
             </el-button>
-            <el-button size="small" link type="primary" @click="handleUsers(row)" v-if="userStore.hasPermission('system:role:query')">
+            <el-button
+              size="small"
+              type="success"
+              plain
+              @click="handleUsers(row)"
+              v-if="userStore.hasPermission('system:role:query')"
+              class="action-btn user-btn"
+            >
               <el-icon><User /></el-icon>
               查看用户
             </el-button>
@@ -275,11 +289,12 @@
         </el-form>
 
         <el-table :data="roleUsers" v-loading="usersLoading" border>
+          <el-table-column prop="id" label="ID" width="80" align="center" />
           <el-table-column prop="username" label="用户名" min-width="140" align="center">
             <template #default="{ row }">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <div class="user-avatar">
-                  {{ row.nickname.charAt(0) || row.username.charAt(0) }}
+                  {{ row.nickname?.charAt(0) || row.username?.charAt(0) || 'U' }}
                 </div>
                 <span>{{ row.username }}</span>
               </div>
@@ -421,6 +436,7 @@ import {
   getRoleAssignedUsers,
   getUserRoles,
   removeRoleFromUser,
+  assignRolesToUser,
   type Role,
   type RoleCreateParams,
   type RoleUpdateParams,
@@ -771,14 +787,27 @@ const handleUsers = async (row: Role) => {
 const fetchRoleUsers = async () => {
   usersLoading.value = true
   try {
-    const data = await getRoleAssignedUsers(currentRoleId.value, {
+    console.log('fetchRoleUsers called, currentRoleId:', currentRoleId.value)
+    const res = await getRoleAssignedUsers(currentRoleId.value, {
       pageNum: userPagination.pageNum,
       pageSize: userPagination.pageSize,
       keyword: userSearchForm.keyword
     })
-    roleUsers.value = data.records
-    userPagination.total = data.total
+    console.log('getRoleAssignedUsers response:', res)
+    // 确保正确赋值 - 从响应数据的 data 字段获取
+    if (res && res.data && res.data.records) {
+      roleUsers.value = [...res.data.records]
+      userPagination.total = res.data.total || 0
+      console.log('roleUsers set to:', roleUsers.value, 'total:', userPagination.total)
+    } else {
+      roleUsers.value = []
+      userPagination.total = 0
+      console.log('No records in response')
+    }
   } catch (error) {
+    console.error('fetchRoleUsers error:', error)
+    roleUsers.value = []
+    userPagination.total = 0
     // 错误已在拦截器处理
   } finally {
     usersLoading.value = false
@@ -883,6 +912,7 @@ onMounted(() => {
 }
 
 :deep(.el-card__header .card-header span) {
+  color: #ffffff !important;
   color: #303133;
 }
 
@@ -1025,6 +1055,60 @@ onMounted(() => {
 .users-dialog {
   max-height: 500px;
   overflow-y: auto;
+}
+
+/* 操作按钮样式 - 与用户管理保持一致 */
+:deep(.el-table .el-button--small) {
+  padding: 6px 12px;
+  margin: 0 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+:deep(.el-table .el-button--small:hover) {
+  opacity: 0.8;
+}
+
+/* Link 类型按钮样式 - Element Plus 标准样式 */
+:deep(.el-table .el-button--success.is-link) {
+  --el-button-text-color: var(--el-color-success);
+  --el-button-bg-color: var(--el-color-success-light-9);
+  --el-button-border-color: var(--el-color-success-light-5);
+  --el-button-hover-text-color: var(--el-color-white);
+  --el-button-hover-bg-color: var(--el-color-success);
+  --el-button-hover-border-color: var(--el-color-success);
+  --el-button-active-text-color: var(--el-color-white);
+}
+
+:deep(.el-table .el-button--warning.is-link) {
+  --el-button-text-color: var(--el-color-warning);
+  --el-button-bg-color: var(--el-color-warning-light-9);
+  --el-button-border-color: var(--el-color-warning-light-5);
+  --el-button-hover-text-color: var(--el-color-white);
+  --el-button-hover-bg-color: var(--el-color-warning);
+  --el-button-hover-border-color: var(--el-color-warning);
+  --el-button-active-text-color: var(--el-color-white);
+}
+
+:deep(.el-table .el-button--danger.is-link) {
+  --el-button-text-color: var(--el-color-danger);
+  --el-button-bg-color: var(--el-color-danger-light-9);
+  --el-button-border-color: var(--el-color-danger-light-5);
+  --el-button-hover-text-color: var(--el-color-white);
+  --el-button-hover-bg-color: var(--el-color-danger);
+  --el-button-hover-border-color: var(--el-color-danger);
+  --el-button-active-text-color: var(--el-color-white);
+}
+
+/* 新增角色按钮文字颜色 */
+.white-text-btn {
+  --el-button-text-color: #ffffff;
+  color: #ffffff !important;
+}
+
+:deep(.white-text-btn) {
+  --el-button-text-color: #ffffff;
+  color: #ffffff !important;
 }
 
 .user-search-form {

@@ -352,7 +352,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import {
@@ -361,11 +361,11 @@ import {
   updateBatch,
   deleteBatch,
   updateBatchQuality,
-  getProducts,
   type Batch,
   type BatchCreateParams,
   type BatchUpdateParams
 } from '@/api/traceability'
+import { getProducts } from '@/api/supply'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -401,6 +401,9 @@ const tableData = ref<Batch[]>([])
 
 // 产品选项
 const productOptions = ref<Array<{ id: number; name: string; code: string }>>([])
+
+// 防止重复加载的标志
+const productOptionsLoaded = ref(false)
 
 // 表单数据
 const formData = reactive<BatchCreateParams & { id?: number }>({
@@ -466,9 +469,20 @@ const qualityFormRules: FormRules = {
 
 // 获取产品列表
 const fetchProductOptions = async () => {
+  // 如果已经加载过，则不再重复加载
+  if (productOptionsLoaded.value && productOptions.value.length > 0) {
+    return
+  }
+  
   try {
     const res = await getProducts({ pageNum: 1, pageSize: 1000, enabled: 1 })
-    productOptions.value = res.data?.records || []
+    const products = res.data?.records || []
+    productOptions.value = products.map(p => ({
+      id: p.id,
+      name: p.name,
+      code: p.code
+    }))
+    productOptionsLoaded.value = true
   } catch (error) {
     console.error('获取产品列表失败:', error)
   }
@@ -519,14 +533,15 @@ const handleReset = () => {
 }
 
 // 新增
-const handleCreate = () => {
+const handleCreate = async () => {
   dialogTitle.value = '新增批次'
   resetForm()
+  await fetchProductOptions() // 只在打开对话框时加载产品列表
   dialogVisible.value = true
 }
 
 // 编辑
-const handleEdit = (row: Batch) => {
+const handleEdit = async (row: Batch) => {
   dialogTitle.value = '编辑批次'
   Object.assign(formData, {
     id: row.id,
@@ -540,6 +555,7 @@ const handleEdit = (row: Batch) => {
     status: row.status,
     remark: row.remark
   })
+  await fetchProductOptions() // 只在打开对话框时加载产品列表
   dialogVisible.value = true
 }
 
@@ -696,8 +712,12 @@ const getStatusType = (status: string) => {
 }
 
 onMounted(() => {
-  fetchProductOptions()
   fetchData()
+})
+
+// 组件卸载时重置加载标志
+onUnmounted(() => {
+  productOptionsLoaded.value = false
 })
 </script>
 

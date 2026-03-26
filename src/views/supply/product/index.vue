@@ -7,7 +7,7 @@
           <el-button
             type="primary"
             @click="handleCreate"
-            v-if="userStore.hasPermission('supply:product:add') || userStore.hasPermission('traceability:product:add')"
+            v-if="userStore.hasPermission('supply:product:add')"
           >
             <el-icon><Plus /></el-icon>
             新增产品
@@ -101,7 +101,7 @@
               link
               type="primary"
               @click="handleEdit(row)"
-              v-if="userStore.hasPermission('supply:product:edit') || userStore.hasPermission('traceability:product:edit')"
+              v-if="userStore.hasPermission('supply:product:edit')"
             >
               <el-icon><Edit /></el-icon>
               编辑
@@ -109,7 +109,7 @@
             <el-popconfirm
               title="确定要删除该产品吗？"
               @confirm="handleDelete(row)"
-              v-if="userStore.hasPermission('supply:product:delete') || userStore.hasPermission('traceability:product:delete')"
+              v-if="userStore.hasPermission('supply:product:delete')"
             >
               <template #reference>
                 <el-button size="small" link type="danger">
@@ -215,7 +215,7 @@ import {
   type Product,
   type ProductCreateParams,
   type ProductUpdateParams
-} from '@/api/traceability'
+} from '@/api/supply'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
@@ -273,7 +273,6 @@ const formRules: FormRules = {
 const fetchCategoryOptions = async () => {
   try {
     const res = await getCategories()
-    // 响应拦截器返回的是完整响应对象 { code, message, data }
     categoryOptions.value = res.data || []
   } catch (error) {
     console.error('获取分类列表失败:', error)
@@ -290,12 +289,11 @@ const fetchData = async () => {
       pageSize: pagination.pageSize,
       ...searchForm
     })
-    // 响应拦截器返回的是完整响应对象 { code, message, data }
     tableData.value = res.data?.records || []
     pagination.total = res.data?.total || 0
   } catch (error: any) {
     console.error('获取产品列表失败:', error)
-    ElMessage.error(error.message || '获取分类列表失败')
+    ElMessage.error(error.message || '获取产品列表失败')
   } finally {
     loading.value = false
   }
@@ -367,7 +365,6 @@ const handleSubmit = async () => {
           await updateProduct(formData.id, updateData as ProductUpdateParams)
           ElMessage.success('更新成功')
         } else {
-          // 新增时不传递 code，由后端生成
           const { id, code, ...createData } = formData
           await createProduct(createData as any)
           ElMessage.success('创建成功')

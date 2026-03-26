@@ -570,14 +570,15 @@ const handleReset = () => {
 }
 
 // 新增
-const handleCreate = () => {
+const handleCreate = async () => {
   dialogTitle.value = '新增运输记录'
   resetForm()
+  await fetchBatchOptions() // 只在打开对话框时加载批次列表
   dialogVisible.value = true
 }
 
 // 编辑
-const handleEdit = (row: TransportRecord) => {
+const handleEdit = async (row: TransportRecord) => {
   dialogTitle.value = '编辑运输记录'
   Object.assign(formData, {
     id: row.id,
@@ -593,20 +594,15 @@ const handleEdit = (row: TransportRecord) => {
     status: row.status,
     remark: row.remark
   })
+  await fetchBatchOptions() // 只在打开对话框时加载批次列表
   dialogVisible.value = true
 }
 
 // 查看详情
 const handleView = async (row: TransportRecord) => {
   Object.assign(detailData.value, row)
-  try {
-    const res = await getTransportRecords({ pageNum: 1, pageSize: 1 })
-    // 获取详情时需要单独获取温度记录
-    // 这里简化处理，实际应该调用 getTransportRecord 接口
-    temperatureRecords.value = row.temperatureRecords || []
-  } catch (error) {
-    console.error('获取详情失败:', error)
-  }
+  // 温度记录已经在 row.temperatureRecords 中
+  temperatureRecords.value = row.temperatureRecords || []
   detailDialogVisible.value = true
 }
 
@@ -780,7 +776,6 @@ const getTemperatureType = (temp: number) => {
 }
 
 onMounted(() => {
-  fetchBatchOptions()
   fetchData()
 })
 </script>

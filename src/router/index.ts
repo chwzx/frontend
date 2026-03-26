@@ -52,22 +52,16 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '供应链管理', icon: 'Box' },
     children: [
       {
-        path: 'supplier',
-        name: 'SupplierManagement',
-        component: () => import('@/views/supply/supplier/index.vue'),
-        meta: { title: '供应商管理', icon: 'UserFilled', permission: 'supply:supplier' }
-      },
-      {
         path: 'product',
         name: 'SupplyProductManagement',
-        component: () => import('@/views/traceability/product/index.vue'),
+        component: () => import('@/views/supply/product/index.vue'),
         meta: { title: '产品管理', icon: 'Box', permission: 'supply:product' }
       },
       {
         path: 'category',
         name: 'SupplyCategoryManagement',
-        component: () => import('@/views/traceability/category/index.vue'),
-        meta: { title: '分类管理', icon: 'FolderOpened', permission: 'supply:product' }
+        component: () => import('@/views/supply/category/index.vue'),
+        meta: { title: '分类管理', icon: 'FolderOpened', permission: 'supply:category' }
       }
     ]
   },

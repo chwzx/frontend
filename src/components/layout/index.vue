@@ -42,23 +42,18 @@
         </el-sub-menu>
 
         <!-- 供应链管理 -->
-        <el-sub-menu index="/supply" v-if="hasSupplyMenu">
+        <el-sub-menu index="/supply">
           <template #title>
             <el-icon><Box /></el-icon>
             <span>供应链管理</span>
           </template>
 
-          <el-menu-item index="/supply/supplier" v-if="userStore.hasPermission('supply:supplier') || userStore.hasPermission('supply:supplier:query') || userStore.hasPermission('supply:supplier:add')">
-            <el-icon><UserFilled /></el-icon>
-            <span>供应商管理</span>
-          </el-menu-item>
-
-          <el-menu-item index="/supply/product" v-if="userStore.hasPermission('supply:product') || userStore.hasPermission('supply:product:query') || userStore.hasPermission('supply:product:add')">
+          <el-menu-item index="/supply/product">
             <el-icon><Box /></el-icon>
             <span>产品管理</span>
           </el-menu-item>
 
-          <el-menu-item index="/supply/category" v-if="userStore.hasPermission('supply:category') || userStore.hasPermission('supply:category:query') || userStore.hasPermission('supply:category:add')">
+          <el-menu-item index="/supply/category">
             <el-icon><FolderOpened /></el-icon>
             <span>分类管理</span>
           </el-menu-item>
@@ -159,23 +154,11 @@ const hasSystemMenu = computed(() => {
 
 // 检查是否有供应链管理菜单（至少有一个子菜单权限）
 const hasSupplyMenu = computed(() => {
-  const hasSupplierPermission = userStore.hasPermission('supply:supplier') ||
-                                userStore.hasPermission('supply:supplier:query') ||
-                                userStore.hasPermission('supply:supplier:add') ||
-                                userStore.hasPermission('supply:supplier:edit') ||
-                                userStore.hasPermission('supply:supplier:delete')
-  const hasProductPermission = userStore.hasPermission('supply:product') ||
-                               userStore.hasPermission('supply:product:query') ||
-                               userStore.hasPermission('supply:product:add') ||
-                               userStore.hasPermission('supply:product:edit') ||
-                               userStore.hasPermission('supply:product:delete')
-  const hasCategoryPermission = userStore.hasPermission('supply:category') ||
-                                userStore.hasPermission('supply:category:query') ||
-                                userStore.hasPermission('supply:category:add') ||
-                                userStore.hasPermission('supply:category:edit') ||
-                                userStore.hasPermission('supply:category:delete')
-
-  return hasSupplierPermission || hasProductPermission || hasCategoryPermission
+  // 只要有 supply:product 或 supply:category 相关权限就显示
+  return userStore.hasPermission('supply:product') ||
+         userStore.hasPermission('supply:category') ||
+         userStore.permissions?.some(p => p?.startsWith('supply:product')) ||
+         userStore.permissions?.some(p => p?.startsWith('supply:category'))
 })
 
 // 检查是否有溯源管理菜单（至少有一个子菜单权限）

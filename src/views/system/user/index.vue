@@ -74,12 +74,9 @@
         </el-table-column>
         <el-table-column label="状态" width="160" align="center">
           <template #default="{ row }">
-            <el-switch
-              v-model="row.enabled"
-              active-text="启用"
-              inactive-text="禁用"
-              @change="handleToggleStatus(row)"
-            />
+            <el-tag :type="row.enabled ? 'success' : 'danger'" effect="plain">
+              {{ row.enabled ? '启用' : '禁用' }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="280" fixed="right" align="center">
@@ -146,14 +143,18 @@
         :rules="userRules"
         label-width="80px"
       >
-        <el-form-item v-if="!isEdit" label="用户名" prop="username">
+        <el-form-item label="用户名" prop="username">
           <el-input
             v-model="userForm.username"
-            placeholder="请输入用户名（英文、数字、下划线）"
+            :disabled="isEdit"
+            :placeholder="isEdit ? '用户名不可修改' : '请输入用户名（英文、数字、下划线）'"
             clearable
             maxlength="20"
             show-word-limit
           />
+          <div v-if="isEdit" style="font-size: 12px; color: #909399; margin-top: 4px;">
+            用户名创建后不可修改
+          </div>
         </el-form-item>
         <el-form-item v-if="!isEdit" label="密码" prop="password">
           <el-input
@@ -218,7 +219,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import {
@@ -300,8 +301,8 @@ const validateEmail = (rule: any, value: string, callback: any) => {
   }
 }
 
-const userRules: FormRules = {
-  username: [
+const userRules = computed(() => ({
+  username: isEdit.value ? [] : [
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含英文、数字和下划线', trigger: 'blur' },
     { min: 2, max: 20, message: '用户名长度在 2-20 个字符', trigger: 'blur' }
@@ -310,13 +311,13 @@ const userRules: FormRules = {
     { required: true, message: '请输入昵称', trigger: 'blur' },
     { min: 2, max: 20, message: '昵称长度在 2-20 个字符', trigger: 'blur' }
   ],
-  password: [
+  password: isEdit.value ? [] : [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, max: 20, message: '密码长度在 6-20 个字符', trigger: 'blur' }
   ],
   email: [{ validator: validateEmail, trigger: 'blur' }],
   phone: [{ validator: validatePhone, trigger: 'blur' }]
-}
+}))
 
 const fetchData = async () => {
   loading.value = true
@@ -355,6 +356,8 @@ const handleCreate = () => {
   userForm.phone = ''
   userForm.password = ''
   userForm.roleIds = []
+  // 重置表单验证
+  userFormRef.value?.clearValidate()
   dialogVisible.value = true
 }
 
@@ -362,6 +365,7 @@ const handleEdit = async (row: User) => {
   isEdit.value = true
   currentUserId.value = row.id
   dialogTitle.value = '编辑用户'
+  userForm.username = row.username
   userForm.nickname = row.nickname
   userForm.email = row.email || ''
   userForm.phone = row.phone || ''
@@ -373,6 +377,8 @@ const handleEdit = async (row: User) => {
   } catch (error) {
     // 错误已在拦截器处理
   }
+  // 重置表单验证
+  userFormRef.value?.clearValidate()
   dialogVisible.value = true
 }
 
@@ -459,8 +465,13 @@ const loadAllRoles = async () => {
 }
 
 .white-text-btn {
-  --el-button-text-color: #ffffff;
-  color: #ffffff;
+  --el-button-text-color: #ffffff !important;
+  color: #ffffff !important;
+}
+
+:deep(.white-text-btn) {
+  --el-button-text-color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 .search-form {
@@ -486,7 +497,7 @@ const loadAllRoles = async () => {
 }
 
 :deep(.el-card__header .card-header span) {
-  color: #303133;
+  color: #ffffff !important;
 }
 
 /* 表格样式 */
@@ -582,11 +593,6 @@ const loadAllRoles = async () => {
   font-weight: 500;
 }
 
-:deep(.el-tag--plain) {
-  background-color: #ecf5ff;
-  color: #409eff;
-  border-color: #b3d8ff;
-}
 
 /* 分页样式 */
 :deep(.el-pagination) {
